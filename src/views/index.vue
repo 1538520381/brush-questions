@@ -1,15 +1,188 @@
 <template>
-<div id="index">
-    Hello World
-</div>
+    <div id="index">
+        <div class="container">
+            <div class="fileContainer">
+                <div class="uploadContainer">
+                    <label class="uploadButton" for="upload">文件上传</label>
+                    <input type="file" id="upload" @change="uploadFile($event)" style="display: none;">
+                    <div class="fileNameSpan">
+                        {{ fileName == '' || fileName == null || fileName == undefined ? '未上传文件' : fileName }}
+                    </div>
+                </div>
+                <div class="buttonContainer">
+                    <div class="startButton" @click="control(true)">
+                        开始做题
+                    </div>
+                </div>
+            </div>
+            <div class="questionContainer" ref="questionContainer">
+                <div v-if="controlling">
+                    <div class="returnFileContainerButton" @click="control(false)">
+                        <svg-icon icon-class="exit" class="returnFileContainerButtonIcon"></svg-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script>
-export default{
-    name: 'index'
+import * as XLSX from 'xlsx'
+export default {
+    name: 'index',
+    data() {
+        return {
+            file: null,
+            fileName: '',
+            data: [],
+            controlling: false
+        }
+    },
+    created() {
+    },
+    methods: {
+        uploadFile(event) {
+            this.file = event.target.files[0]
+            this.fileName = this.file.name
+            const reader = new FileReader()
+            reader.readAsBinaryString(this.file)
+            reader.onload = re => {
+                const data = re.target.result
+                const zzexcel = XLSX.read(data, {
+                    type: 'binary'
+                })
+                var table = zzexcel.Sheets[Object.keys(zzexcel.Sheets)[0]]
+                var index = table['!ref'].indexOf(':')
+                var row = table['!ref'].substring(index + 2)
+                this.data = []
+                for (var i = 2; i <= row; i++) {
+                    var obj = {}
+                    obj.type = table['A' + i].v
+                    obj.question = table['B' + i].v
+                    obj.correct = table['C' + i].v
+                    obj.optionNum = table['D' + i].v
+                    obj.options = []
+                    for (var j = 1; j <= obj.optionNum; j++) {
+                        obj.options.push(table[String.fromCharCode('D'.charCodeAt(0) + j) + i].v)
+                    }
+                    this.data.push(obj)
+                }
+                this.$message.success('文件上传成功')
+            }
+        },
+        control(flag) {
+            var obj = this.$refs.questionContainer
+            var _this = this
+            if (flag) {
+                if (this.file == null) {
+                    this.$message.error('请先上传文件')
+                } else {
+                    var timestamp = 0
+                    var clock = setInterval(function () {
+                        timestamp += 1
+                        obj.style.width = timestamp + '%'
+                        if (timestamp == 96) {
+                            clearInterval(clock)
+                            _this.controlling = true
+                        }
+                    })
+                }
+            } else {
+                var timestamp = 96
+                this.controlling = false
+                var clock = setInterval(function () {
+                    timestamp -= 1
+                    obj.style.width = timestamp + '%'
+                    if (timestamp == 0) {
+                        clearInterval(clock)
+                    }
+                })
+            }
+        }
+    }
 }
 </script>
 
 <style scoped>
+#index {
+    width: 70%;
+    height: calc(100% - 120px);
+    padding: 60px 15% 60px 15%;
+    background-color: rgb(245, 228, 206);
+}
 
+.container {
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    position: relative;
+    background-color: rgb(233, 205, 168);
+}
+
+.fileContainer {
+    width: 160px;
+    height: calc(100% - 60px);
+    padding: 30px 20px 30px 20px;
+    border-radius: 30px;
+    position: absolute;
+}
+
+.uploadContainer {
+    padding: 10px 5px 10px 5px;
+}
+
+.uploadButton {
+    width: 75%;
+    height: 30px;
+    padding: 5px 0px 5px 0px;
+    border-radius: 20px;
+    background-color: rgb(221, 180, 128);
+    display: inline-block;
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.fileNameSpan {
+    padding: 10px;
+}
+
+.buttonContainer {
+    padding: 10px 5px 10px 5px;
+}
+
+.startButton {
+    width: 75%;
+    height: 30px;
+    padding: 5px 0px 5px 0px;
+    border-radius: 20px;
+    background-color: rgb(221, 180, 128);
+    display: inline-block;
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.questionContainer {
+    width: 0%;
+    height: calc(100% - 40px);
+    border-radius: 30px;
+    padding: 20px 2% 20px 2%;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 0;
+    background-color: rgb(221, 180, 128);
+}
+
+.returnFileContainerButton {
+    cursor: pointer;
+}
+
+.returnFileContainerButtonIcon {
+    width: 30px;
+    height: 30px;
+    padding-right: 10px;
+    float: right;
+}
 </style>
