@@ -20,6 +20,23 @@
                     <div class="returnFileContainerButton" @click="control(false)">
                         <svg-icon icon-class="exit" class="returnFileContainerButtonIcon"></svg-icon>
                     </div>
+                    <div class="questionTypeContainer">
+                        {{ currentQuestion.type }}
+                    </div>
+                    <div class="questionStemContainer">
+                        {{ currentQuestion.stem }}
+                    </div>
+                    <div class="questionOptionsContainer">
+                        <div class="questionOptionContainer" v-for="(item, value) in currentQuestion.options">
+                            <span class="questionOptionId">{{ String.fromCharCode('A'.charCodeAt(0) + value) }}</span>
+                            <span class="questionOptionItem">{{ item }}</span>
+                        </div>
+                    </div>
+                    <div class="questionButtonContainer">
+                        <div class="questionButton">
+                            {{ checkFlag ? '下一题' : '不会' }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -35,6 +52,8 @@ export default {
             file: null,
             fileName: '',
             data: [],
+            currentQuestion: {},
+            checkFlag: false,
             controlling: false
         }
     },
@@ -58,7 +77,7 @@ export default {
                 for (var i = 2; i <= row; i++) {
                     var obj = {}
                     obj.type = table['A' + i].v
-                    obj.question = table['B' + i].v
+                    obj.stem = table['B' + i].v
                     obj.correct = table['C' + i].v
                     obj.optionNum = table['D' + i].v
                     obj.options = []
@@ -78,6 +97,7 @@ export default {
                     this.$message.error('请先上传文件')
                 } else {
                     var timestamp = 0
+                    this.getRandomQuestion()
                     var clock = setInterval(function () {
                         timestamp += 1
                         obj.style.width = timestamp + '%'
@@ -98,6 +118,9 @@ export default {
                     }
                 })
             }
+        },
+        getRandomQuestion() {
+            this.currentQuestion = this.data[Math.floor(Math.random() * this.data.length)]
         }
     }
 }
@@ -184,5 +207,59 @@ export default {
     height: 30px;
     padding-right: 10px;
     float: right;
+}
+
+.questionTypeContainer {
+    padding: 10px;
+    font-size: 25px;
+}
+
+.questionStemContainer {
+    padding: 20px 10% 0px 10%;
+    font-size: 20px;
+}
+
+.questionOptionsContainer {
+    width: 80%;
+    padding: 20px 10% 20px 10%;
+    cursor: pointer;
+}
+
+.questionOptionContainer {
+    width: calc(100% - 40px);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: rgb(216, 161, 88);
+}
+
+.questionOptionId{
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    display: inline-block;
+    text-align: center;
+    background-color: rgb(239, 212, 151);
+}
+
+.questionOptionItem{
+    padding: 8px;
+}
+
+.questionButtonContainer {
+    width: 100%;
+    text-align: center;
+}
+
+.questionButton {
+    width: 100px;
+    height: 30px;
+    padding: 5px;
+    border-radius: 20px;
+    display: inline-block;
+    font-size: 20px;
+    background-color: rgb(255, 209, 122);
+    cursor: pointer;
 }
 </style>
