@@ -1,24 +1,27 @@
 # brush-questions
+## 一、功能说明
+用户可以自行上传并练习想要刷的题目集
 
-## Project setup
+## 二、使用方式
+1. 在该项目路径下打开命令行
+2. 在命令行中依次输入下列指令
 ```
 npm install
-```
-
-### Compiles and hot-reloads for development
-```
 npm run serve
 ```
+3. 浏览器打开网址 http://localhost:8080/
+4. 将想刷的题集按照源代码中 src/data/questions.xlsx 的xlsx中的格式做成xlsx表
+5. 点击网址中“文件上传”按钮上传题集xlsx表
+6. 点击开始做题
 
-### Compiles and minifies for production
-```
-npm run build
-```
+## 三、注意事项
+1. 如要使用，请下载类型于1.0等版本号的分支上的代码，master是我改代码的主分支，往往是下一版本的半成品
 
-### Lints and fixes files
-```
-npm run lint
-```
+## 四、项目升级计划
+1. 题型支持多选题
+2. 使用者可以自行调整刷题相关属性，如：随机出题或者按顺序出题，选项是否打乱顺序
+3. 添加错题集功能，用户可以在答题结束后下载错题集
+4. 添加标记题功能，用户在答题过程中可以标记题目，并在答题结束后下载标记题集
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## 五、想说的话
+我是一个无聊的大学生，想做点有意思也有意义的事才诞生了做这个项目的想法，如果你有什么建议或者有什么有意思的事想联系我的话，我的邮箱是1538520381@qq.com，期待能结识一群有意思的人一起做有意思的事
