@@ -27,13 +27,14 @@
                         {{ currentQuestion.stem }}
                     </div>
                     <div class="questionOptionsContainer">
-                        <div class="questionOptionContainer" v-for="(item, value) in currentQuestion.options">
-                            <span class="questionOptionId">{{ String.fromCharCode('A'.charCodeAt(0) + value) }}</span>
+                        <div :class="{ 'questionOptionContainer': currentQuestion.optionsFlag[index] == 0, 'questionOptionTrueContainer': currentQuestion.optionsFlag[index] == 1, 'questionOptionFalseContainer': currentQuestion.optionsFlag[index] == -1 }"
+                            v-for="(item, index) in  currentQuestion.options " @click="judge(index)" v-if="optionsRefresh">
+                            <span class="questionOptionId">{{ String.fromCharCode('A'.charCodeAt(0) + index) }}</span>
                             <span class="questionOptionItem">{{ item }}</span>
                         </div>
                     </div>
                     <div class="questionButtonContainer">
-                        <div class="questionButton">
+                        <div class="questionButton" @click="checkFlag ? getRandomQuestion() : judge(-1)">
                             {{ checkFlag ? '下一题' : '不会' }}
                         </div>
                     </div>
@@ -52,9 +53,12 @@ export default {
             file: null,
             fileName: '',
             data: [],
+
+            controlling: false,
+
             currentQuestion: {},
+            optionsRefresh: true,
             checkFlag: false,
-            controlling: false
         }
     },
     created() {
@@ -74,6 +78,7 @@ export default {
                 var index = table['!ref'].indexOf(':')
                 var row = table['!ref'].substring(index + 2)
                 this.data = []
+                console.log(table)
                 for (var i = 2; i <= row; i++) {
                     var obj = {}
                     obj.type = table['A' + i].v
@@ -121,6 +126,19 @@ export default {
         },
         getRandomQuestion() {
             this.currentQuestion = this.data[Math.floor(Math.random() * this.data.length)]
+            this.currentQuestion.optionsFlag = Array(this.currentQuestion.optionNum).fill(0)
+            this.checkFlag = false
+        },
+        judge(index) {
+            if (this.checkFlag == false) {
+                if (this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0) != index && index != -1) {
+                    this.currentQuestion.optionsFlag[index] = -1
+                }
+                this.currentQuestion.optionsFlag[this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0)] = 1
+                this.optionsRefresh = false
+                this.optionsRefresh = true
+                this.checkFlag = true
+            }
         }
     }
 }
@@ -234,7 +252,34 @@ export default {
     background-color: rgb(216, 161, 88);
 }
 
-.questionOptionId{
+.questionOptionContainer:hover {
+    width: calc(100% - 40px);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: rgb(211, 183, 146);
+}
+
+.questionOptionTrueContainer {
+    width: calc(100% - 40px);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: rgb(94, 213, 80);
+}
+
+.questionOptionFalseContainer {
+    width: calc(100% - 40px);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: rgb(209, 56, 39);
+}
+
+.questionOptionId {
     width: 30px;
     height: 30px;
     border-radius: 15px;
@@ -243,7 +288,7 @@ export default {
     background-color: rgb(239, 212, 151);
 }
 
-.questionOptionItem{
+.questionOptionItem {
     padding: 8px;
 }
 
