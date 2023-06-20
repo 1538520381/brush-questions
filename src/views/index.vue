@@ -27,8 +27,9 @@
                         {{ currentQuestion.stem }}
                     </div>
                     <div class="questionOptionsContainer">
-                        <div :class="{ 'questionOptionContainer': currentQuestion.optionsFlag[index] == 0, 'questionOptionTrueContainer': currentQuestion.optionsFlag[index] == 1, 'questionOptionFalseContainer': currentQuestion.optionsFlag[index] == -1 }"
-                            v-for="(item, index) in  currentQuestion.options " @click="judge(index)" v-if="optionsRefresh">
+                        <div :class="{ 'questionOptionContainer': currentQuestion.optionsFlag[index] == 0, 'questionOptionTrueContainer': currentQuestion.optionsFlag[index] == 1, 'questionOptionFalseContainer': currentQuestion.optionsFlag[index] == 2, 'questionOptionChoiceContainer': currentQuestion.optionsFlag[index] == 3 }"
+                            v-for="(item, index) in  currentQuestion.options "
+                            @click="currentQuestion.type == '多选题' ? choice(index) : judge(index)" v-if="optionsRefresh">
                             <span class="questionOptionId">{{ String.fromCharCode('A'.charCodeAt(0) + index) }}</span>
                             <span class="questionOptionItem">{{ item }}</span>
                         </div>
@@ -36,6 +37,9 @@
                     <div class="questionButtonContainer">
                         <div class="questionButton" @click="checkFlag ? getRandomQuestion() : judge(-1)">
                             {{ checkFlag ? '下一题' : '不会' }}
+                        </div>
+                        <div class="questionButton" @click="judge(-1)" v-if="currentQuestion.type == '多选题' && checkFlag == false">
+                            确定
                         </div>
                     </div>
                 </div>
@@ -130,15 +134,63 @@ export default {
             this.checkFlag = false
         },
         judge(index) {
+            switch (this.currentQuestion.type) {
+                case '单选题':
+                    this.judge1(index)
+                    break
+                case '判断题':
+                    this.judge2(index)
+                    break
+                case '多选题':
+                    this.judge3()
+                    break
+                default:
+                    this.$message.error(this.currentQuestion.type + '暂不支持')
+            }
+        },
+        judge1(index) {
             if (this.checkFlag == false) {
                 if (this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0) != index && index != -1) {
-                    this.currentQuestion.optionsFlag[index] = -1
+                    this.currentQuestion.optionsFlag[index] = 2
                 }
                 this.currentQuestion.optionsFlag[this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0)] = 1
-                this.optionsRefresh = false
-                this.optionsRefresh = true
+                this.refresh()
                 this.checkFlag = true
             }
+        },
+        judge2(index) {
+            if (this.checkFlag == false) {
+                if (this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0) != index && index != -1) {
+                    this.currentQuestion.optionsFlag[index] = 2
+                }
+                this.currentQuestion.optionsFlag[this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0)] = 1
+                this.refresh()
+                this.checkFlag = true
+            }
+        },
+        judge3() {
+            if (this.checkFlag == false) {
+                for (var i = 0; i < this.currentQuestion.optionsFlag.length; i++) {
+                    if (this.currentQuestion.optionsFlag[i] == 3) {
+                        if (this.currentQuestion.correct.indexOf(String.fromCharCode('A'.charCodeAt(0) + i)) == -1) {
+                            this.currentQuestion.optionsFlag[i] = 2
+                        }
+                    }
+                }
+                for (var i = 0; i < this.currentQuestion.correct.length; i++) {
+                    this.currentQuestion.optionsFlag[this.currentQuestion.correct.charAt(i).charCodeAt(0) - 'A'.charCodeAt(0)] = 1
+                }
+                this.refresh()
+                this.checkFlag = true
+            }
+        },
+        choice(index) {
+            this.currentQuestion.optionsFlag[index] = this.currentQuestion.optionsFlag[index] == 0 ? 3 : 0
+            this.refresh()
+        },
+        refresh() {
+            this.optionsRefresh = false
+            this.optionsRefresh = true
         }
     }
 }
@@ -279,6 +331,15 @@ export default {
     background-color: rgb(209, 56, 39);
 }
 
+.questionOptionChoiceContainer {
+    width: calc(100% - 40px);
+    margin: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: rgb(20, 196, 219);
+}
+
 .questionOptionId {
     width: 30px;
     height: 30px;
@@ -300,6 +361,7 @@ export default {
 .questionButton {
     width: 100px;
     height: 30px;
+    margin: 5px;
     padding: 5px;
     border-radius: 20px;
     display: inline-block;
