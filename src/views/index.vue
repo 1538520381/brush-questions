@@ -8,6 +8,7 @@
                     <div class="fileNameSpan">
                         {{ fileName == '' || fileName == null || fileName == undefined ? '未上传文件' : fileName }}
                     </div>
+                    <div class="uploadButton" @click="downloadFile()">错题下载</div>
                 </div>
                 <hr>
                 <div class="buttonContainer">
@@ -70,7 +71,8 @@ export default {
         return {
             file: null,
             fileName: '',
-            data: [],
+            questions: [],
+            wrongQuestions: [],
 
             controlling: false,
 
@@ -81,6 +83,24 @@ export default {
             pattern: {
                 randomOption: false,
             },
+
+            obj: [
+                {
+                    id: 1,
+                    name: 2,
+                    score: 3
+                },
+                {
+                    id: 2,
+                    name: 3,
+                    score: 4
+                },
+                {
+                    id: 3,
+                    name: 4,
+                    score: 5
+                }
+            ]
         }
     },
     created() {
@@ -99,9 +119,11 @@ export default {
                 var table = zzexcel.Sheets[Object.keys(zzexcel.Sheets)[0]]
                 var index = table['!ref'].indexOf(':')
                 var row = table['!ref'].substring(index + 2)
-                this.data = []
+                this.questions = []
+                this.wrongQuestions = []
                 for (var i = 2; i <= row; i++) {
                     var obj = {}
+                    obj.id = i - 2
                     obj.type = table['A' + i].v
                     obj.stem = table['B' + i].v
                     obj.correct = table['C' + i].v
@@ -110,7 +132,7 @@ export default {
                     for (var j = 1; j <= obj.optionNum; j++) {
                         obj.options.push(table[String.fromCharCode('D'.charCodeAt(0) + j) + i].v)
                     }
-                    this.data.push(obj)
+                    this.questions.push(obj)
                 }
                 this.$message.success('文件上传成功')
             }
@@ -146,7 +168,7 @@ export default {
             }
         },
         getRandomQuestion() {
-            this.currentQuestion = Object.assign({}, this.data[Math.floor(Math.random() * this.data.length)])
+            this.currentQuestion = Object.assign({}, this.questions[Math.floor(Math.random() * this.questions.length)])
             var options = this.currentQuestion.options
             this.currentQuestion.options = []
             options.forEach(item => {
@@ -162,7 +184,6 @@ export default {
                 this.currentQuestion.options.sort(function () {
                     return (0.5 - Math.random())
                 })
-                console.log(this.currentQuestion.options)
             }
             this.checkFlag = false
         },
@@ -183,8 +204,21 @@ export default {
         },
         judge1(index) {
             if (this.checkFlag == false) {
+                var flag = false
                 if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
                     this.currentQuestion.options[index].optionFlag = 2
+                    flag = true
+                }
+                if (flag) {
+                    flag = false
+                    for (var i = 0; i < this.wrongQuestions.length; i++) {
+                        if (this.wrongQuestions[i].id == this.currentQuestion.id) {
+                            flag = true
+                        }
+                    }
+                    if (flag == false) {
+                        this.wrongQuestions.push(this.questions[this.currentQuestion.id])
+                    }
                 }
                 this.currentQuestion.options.forEach(item => {
                     if (item.optionTrueFlag == 1) {
@@ -197,8 +231,21 @@ export default {
         },
         judge2(index) {
             if (this.checkFlag == false) {
+                var flag = false
                 if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
                     this.currentQuestion.options[index].optionFlag = 2
+                    flag = true
+                }
+                if (flag) {
+                    flag = false
+                    for (var i = 0; i < this.wrongQuestions.length; i++) {
+                        if (this.wrongQuestions[i].id == this.currentQuestion.id) {
+                            flag = true
+                        }
+                    }
+                    if (flag == false) {
+                        this.wrongQuestions.push(this.questions[this.currentQuestion.id])
+                    }
                 }
                 this.currentQuestion.options.forEach(item => {
                     if (item.optionTrueFlag == 1) {
@@ -211,14 +258,30 @@ export default {
         },
         judge3() {
             if (this.checkFlag == false) {
+                var flag = false
                 this.currentQuestion.options.forEach(item => {
-                    if (index != -1 && item.optionFlag == 3) {
+                    if (index != -1 && item.optionFlag == 3 && item.optionTrueFlag == 0) {
                         item.optionFlag = 2
+                        flag = true
                     }
                     if (item.optionTrueFlag == 1) {
+                        if (item.optionFlag == 0) {
+                            flag = true
+                        }
                         item.optionFlag = 1
                     }
                 })
+                if (flag) {
+                    flag = false
+                    for (var i = 0; i < this.wrongQuestions.length; i++) {
+                        if (this.wrongQuestions[i].id == this.currentQuestion.id) {
+                            flag = true
+                        }
+                    }
+                    if (flag == false) {
+                        this.wrongQuestions.push(this.questions[this.currentQuestion.id])
+                    }
+                }
                 this.refresh()
                 this.checkFlag = true
             }
@@ -230,6 +293,24 @@ export default {
         refresh() {
             this.optionsRefresh = false
             this.optionsRefresh = true
+        },
+        downloadFile() {
+            var wrongQuestions = []
+            this.wrongQuestions.forEach(item => {
+                var wrongQuestion = {}
+                wrongQuestion['题型'] = item.type
+                wrongQuestion['题干'] = item.stem
+                wrongQuestion['正确答案'] = item.correct
+                wrongQuestion['选项数'] = item.optionNum
+                for (var i = 0; i < item.options.length; i++) {
+                    wrongQuestion[String.fromCharCode('A'.charCodeAt(0) + i)] = item.options[i]
+                }
+                wrongQuestions.push(wrongQuestion)
+            })
+            var ws = XLSX.utils.json_to_sheet(wrongQuestions)
+            var wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, "错题集")
+            XLSX.writeFile(wb, "错题集.xlsx")
         }
     }
 }
