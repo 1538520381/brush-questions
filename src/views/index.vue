@@ -9,10 +9,23 @@
                         {{ fileName == '' || fileName == null || fileName == undefined ? '未上传文件' : fileName }}
                     </div>
                 </div>
+                <hr>
                 <div class="buttonContainer">
                     <div class="startButton" @click="control(true)">
                         开始做题
                     </div>
+                </div>
+                <hr>
+                <div class="patternVontainer">
+                    <div class="patternTitle">
+                        模式选择
+                    </div>
+                    <el-form ref="form" :model="pattern" label-width="150px">
+                        <el-form-item label="选项顺序是否打乱">
+                            <el-switch v-model="pattern.randomOption" active-color="#13ce66"
+                                inactive-color="#ff4949"></el-switch>
+                        </el-form-item>
+                    </el-form>
                 </div>
             </div>
             <div class="questionContainer" ref="questionContainer">
@@ -27,18 +40,19 @@
                         {{ currentQuestion.stem }}
                     </div>
                     <div class="questionOptionsContainer">
-                        <div :class="{ 'questionOptionContainer': currentQuestion.optionsFlag[index] == 0, 'questionOptionTrueContainer': currentQuestion.optionsFlag[index] == 1, 'questionOptionFalseContainer': currentQuestion.optionsFlag[index] == 2, 'questionOptionChoiceContainer': currentQuestion.optionsFlag[index] == 3 }"
+                        <div :class="{ 'questionOptionContainer': currentQuestion.options[index].optionFlag == 0, 'questionOptionTrueContainer': currentQuestion.options[index].optionFlag == 1, 'questionOptionFalseContainer': currentQuestion.options[index].optionFlag == 2, 'questionOptionChoiceContainer': currentQuestion.options[index].optionFlag == 3 }"
                             v-for="(item, index) in  currentQuestion.options "
                             @click="currentQuestion.type == '多选题' ? choice(index) : judge(index)" v-if="optionsRefresh">
                             <span class="questionOptionId">{{ String.fromCharCode('A'.charCodeAt(0) + index) }}</span>
-                            <span class="questionOptionItem">{{ item }}</span>
+                            <span class="questionOptionItem">{{ item.option }}</span>
                         </div>
                     </div>
                     <div class="questionButtonContainer">
                         <div class="questionButton" @click="checkFlag ? getRandomQuestion() : judge(-1)">
                             {{ checkFlag ? '下一题' : '不会' }}
                         </div>
-                        <div class="questionButton" @click="judge(-1)" v-if="currentQuestion.type == '多选题' && checkFlag == false">
+                        <div class="questionButton" @click="judge(-1)"
+                            v-if="currentQuestion.type == '多选题' && checkFlag == false">
                             确定
                         </div>
                     </div>
@@ -63,6 +77,10 @@ export default {
             currentQuestion: {},
             optionsRefresh: true,
             checkFlag: false,
+
+            pattern: {
+                randomOption: false,
+            },
         }
     },
     created() {
@@ -82,7 +100,6 @@ export default {
                 var index = table['!ref'].indexOf(':')
                 var row = table['!ref'].substring(index + 2)
                 this.data = []
-                console.log(table)
                 for (var i = 2; i <= row; i++) {
                     var obj = {}
                     obj.type = table['A' + i].v
@@ -129,8 +146,24 @@ export default {
             }
         },
         getRandomQuestion() {
-            this.currentQuestion = this.data[Math.floor(Math.random() * this.data.length)]
-            this.currentQuestion.optionsFlag = Array(this.currentQuestion.optionNum).fill(0)
+            this.currentQuestion = Object.assign({}, this.data[Math.floor(Math.random() * this.data.length)])
+            var options = this.currentQuestion.options
+            this.currentQuestion.options = []
+            options.forEach(item => {
+                var option = {}
+                option.option = item
+                option.optionFlag = 0
+                this.currentQuestion.options.push(option)
+            });
+            for (var i = 0; i < this.currentQuestion.correct.length; i++) {
+                this.currentQuestion.options[this.currentQuestion.correct.charAt(i).charCodeAt(0) - 'A'.charCodeAt(0)].optionTrueFlag = 1
+            }
+            if (this.pattern.randomOption) {
+                this.currentQuestion.options.sort(function () {
+                    return (0.5 - Math.random())
+                })
+                console.log(this.currentQuestion.options)
+            }
             this.checkFlag = false
         },
         judge(index) {
@@ -150,42 +183,48 @@ export default {
         },
         judge1(index) {
             if (this.checkFlag == false) {
-                if (this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0) != index && index != -1) {
-                    this.currentQuestion.optionsFlag[index] = 2
+                if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
+                    this.currentQuestion.options[index].optionFlag = 2
                 }
-                this.currentQuestion.optionsFlag[this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0)] = 1
+                this.currentQuestion.options.forEach(item => {
+                    if (item.optionTrueFlag == 1) {
+                        item.optionFlag = 1
+                    }
+                })
                 this.refresh()
                 this.checkFlag = true
             }
         },
         judge2(index) {
             if (this.checkFlag == false) {
-                if (this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0) != index && index != -1) {
-                    this.currentQuestion.optionsFlag[index] = 2
+                if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
+                    this.currentQuestion.options[index].optionFlag = 2
                 }
-                this.currentQuestion.optionsFlag[this.currentQuestion.correct.charCodeAt(0) - 'A'.charCodeAt(0)] = 1
+                this.currentQuestion.options.forEach(item => {
+                    if (item.optionTrueFlag == 1) {
+                        item.optionFlag = 1
+                    }
+                })
                 this.refresh()
                 this.checkFlag = true
             }
         },
         judge3() {
             if (this.checkFlag == false) {
-                for (var i = 0; i < this.currentQuestion.optionsFlag.length; i++) {
-                    if (this.currentQuestion.optionsFlag[i] == 3) {
-                        if (this.currentQuestion.correct.indexOf(String.fromCharCode('A'.charCodeAt(0) + i)) == -1) {
-                            this.currentQuestion.optionsFlag[i] = 2
-                        }
+                this.currentQuestion.options.forEach(item => {
+                    if (index != -1 && item.optionFlag == 3) {
+                        item.optionFlag = 2
                     }
-                }
-                for (var i = 0; i < this.currentQuestion.correct.length; i++) {
-                    this.currentQuestion.optionsFlag[this.currentQuestion.correct.charAt(i).charCodeAt(0) - 'A'.charCodeAt(0)] = 1
-                }
+                    if (item.optionTrueFlag == 1) {
+                        item.optionFlag = 1
+                    }
+                })
                 this.refresh()
                 this.checkFlag = true
             }
         },
         choice(index) {
-            this.currentQuestion.optionsFlag[index] = this.currentQuestion.optionsFlag[index] == 0 ? 3 : 0
+            this.currentQuestion.options[index].optionFlag = this.currentQuestion.options[index].optionFlag == 0 ? 3 : 0
             this.refresh()
         },
         refresh() {
@@ -213,7 +252,7 @@ export default {
 }
 
 .fileContainer {
-    width: 160px;
+    width: 220px;
     height: calc(100% - 60px);
     padding: 30px 20px 30px 20px;
     border-radius: 30px;
@@ -225,7 +264,7 @@ export default {
 }
 
 .uploadButton {
-    width: 75%;
+    width: 125px;
     height: 30px;
     padding: 5px 0px 5px 0px;
     border-radius: 20px;
@@ -245,7 +284,7 @@ export default {
 }
 
 .startButton {
-    width: 75%;
+    width: 125px;
     height: 30px;
     padding: 5px 0px 5px 0px;
     border-radius: 20px;
@@ -254,6 +293,14 @@ export default {
     text-align: center;
     font-size: 20px;
     cursor: pointer;
+}
+
+.patternVontainer {
+    padding: 10px 5px 10px 5px;
+}
+
+.patternTitle {
+    font-size: 20px;
 }
 
 .questionContainer {
