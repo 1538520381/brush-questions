@@ -22,6 +22,10 @@
                         模式选择
                     </div>
                     <el-form ref="form" :model="pattern" label-width="150px">
+                        <el-form-item label="题目顺序是否打乱">
+                            <el-switch v-model="pattern.randomQuestion" active-color="#13ce66"
+                                inactive-color="#ff4949"></el-switch>
+                        </el-form-item>
                         <el-form-item label="选项顺序是否打乱">
                             <el-switch v-model="pattern.randomOption" active-color="#13ce66"
                                 inactive-color="#ff4949"></el-switch>
@@ -49,11 +53,12 @@
                         </div>
                     </div>
                     <div class="questionButtonContainer">
-                        <div class="questionButton" @click="checkFlag ? getRandomQuestion() : judge(-1)">
-                            {{ checkFlag ? '下一题' : '不会' }}
+                        <div class="questionButton"
+                            @click="checkFlag == 0 ? judge(-1) : (checkFlag == 1 ? getQuestion() : control(false))">
+                            {{ checkFlag == 0 ? '不会' : (checkFlag == 1 ? '下一题' : '完成') }}
                         </div>
                         <div class="questionButton" @click="judge(-1)"
-                            v-if="currentQuestion.type == '多选题' && checkFlag == false">
+                            v-if="currentQuestion.type == '多选题' && checkFlag == 0">
                             确定
                         </div>
                     </div>
@@ -78,29 +83,14 @@ export default {
 
             currentQuestion: {},
             optionsRefresh: true,
-            checkFlag: false,
+            checkFlag: 0,
 
             pattern: {
+                randomQuestion: false,
                 randomOption: false,
             },
 
-            obj: [
-                {
-                    id: 1,
-                    name: 2,
-                    score: 3
-                },
-                {
-                    id: 2,
-                    name: 3,
-                    score: 4
-                },
-                {
-                    id: 3,
-                    name: 4,
-                    score: 5
-                }
-            ]
+            questionIndex: 0
         }
     },
     created() {
@@ -145,7 +135,8 @@ export default {
                     this.$message.error('请先上传文件')
                 } else {
                     var timestamp = 0
-                    this.getRandomQuestion()
+                    this.questionIndex = 0
+                    this.getQuestion()
                     var clock = setInterval(function () {
                         timestamp += 1
                         obj.style.width = timestamp + '%'
@@ -167,8 +158,12 @@ export default {
                 })
             }
         },
-        getRandomQuestion() {
-            this.currentQuestion = Object.assign({}, this.questions[Math.floor(Math.random() * this.questions.length)])
+        getQuestion() {
+            if (this.pattern.randomQuestion == true) {
+                this.questionIndex = Math.floor(Math.random() * this.questions.length)
+            }
+            this.currentQuestion = Object.assign({}, this.questions[this.questionIndex])
+            this.questionIndex++
             var options = this.currentQuestion.options
             this.currentQuestion.options = []
             options.forEach(item => {
@@ -185,7 +180,7 @@ export default {
                     return (0.5 - Math.random())
                 })
             }
-            this.checkFlag = false
+            this.checkFlag = 0
         },
         judge(index) {
             switch (this.currentQuestion.type) {
@@ -203,7 +198,7 @@ export default {
             }
         },
         judge1(index) {
-            if (this.checkFlag == false) {
+            if (this.checkFlag == 0) {
                 var flag = false
                 if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
                     this.currentQuestion.options[index].optionFlag = 2
@@ -225,12 +220,15 @@ export default {
                         item.optionFlag = 1
                     }
                 })
+                this.checkFlag = 1
+                if (this.pattern.randomQuestion == false && this.questionIndex == this.questions.length) {
+                    this.checkFlag = 2
+                }
                 this.refresh()
-                this.checkFlag = true
             }
         },
         judge2(index) {
-            if (this.checkFlag == false) {
+            if (this.checkFlag == 0) {
                 var flag = false
                 if (index != -1 && this.currentQuestion.options[index].optionTrueFlag != 1) {
                     this.currentQuestion.options[index].optionFlag = 2
@@ -252,15 +250,18 @@ export default {
                         item.optionFlag = 1
                     }
                 })
+                this.checkFlag = 1
+                if (this.pattern.randomQuestion == false && this.questionIndex == this.questions.length) {
+                    this.checkFlag = 2
+                }
                 this.refresh()
-                this.checkFlag = true
             }
         },
         judge3() {
-            if (this.checkFlag == false) {
+            if (this.checkFlag == 0) {
                 var flag = false
                 this.currentQuestion.options.forEach(item => {
-                    if (index != -1 && item.optionFlag == 3 && item.optionTrueFlag == 0) {
+                    if (index != -1 && item.optionFlag == 3 && item.optionTrueFlag != 1) {
                         item.optionFlag = 2
                         flag = true
                     }
@@ -282,13 +283,18 @@ export default {
                         this.wrongQuestions.push(this.questions[this.currentQuestion.id])
                     }
                 }
+                this.checkFlag = 1
+                if (this.pattern.randomQuestion == false && this.questionIndex == this.questions.length) {
+                    this.checkFlag = 2
+                }
                 this.refresh()
-                this.checkFlag = true
             }
         },
         choice(index) {
-            this.currentQuestion.options[index].optionFlag = this.currentQuestion.options[index].optionFlag == 0 ? 3 : 0
-            this.refresh()
+            if (this.checkFlag == 0) {
+                this.currentQuestion.options[index].optionFlag = this.currentQuestion.options[index].optionFlag == 0 ? 3 : 0
+                this.refresh()
+            }
         },
         refresh() {
             this.optionsRefresh = false
