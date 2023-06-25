@@ -18,7 +18,7 @@ export const constantRoutes = [
 const createRouter = () => new VueRouter({
     scrollBehavior: () => ({ y: 0 }),
     routes: constantRoutes,
-    mode: 'history'
+    mode: 'hash'
 })
 
 const router = createRouter()

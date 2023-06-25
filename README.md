@@ -3,16 +3,29 @@
 用户可以自行上传并练习想要刷的题目集
 
 ## 二、使用方式
-1. 在该项目路径下打开命令行
-2. 在命令行中依次输入下列指令
-```
-npm install
-npm run serve
-```
-3. 浏览器打开网址 http://localhost:8080/
-4. 将想刷的题集按照源代码中 src/data/questions.xlsx 的xlsx中的格式做成xlsx表
-5. 点击网址中“文件上传”按钮上传题集xlsx表
-6. 点击开始做题
+1. 方法1
+    1. 在该项目路径下打开命令行
+    2. 在命令行中依次输入下列指令
+    ```
+    npm install
+    npm run serve
+    ```
+    3. 浏览器打开网址 http://localhost:8080/
+    4. 将想刷的题集按照源代码中 src/data/questions.xlsx 的xlsx中的格式做成xlsx表
+    5. 点击网址中“文件上传”按钮上传题集xlsx表
+    6. 点击开始做题
+2. 方法2
+    1. 在该项目路径下打开命令行
+    2. 在命令行中依次输入下列指令
+    ```
+    npm install
+    npm run build
+    ```
+    3. 打开输入上述命令后出现的dist文件夹
+    4. 点击打开index.html
+    5. 将想刷的题集按照源代码中 src/data/questions.xlsx 的xlsx中的格式做成xlsx表
+    6. 点击网址中“文件上传”按钮上传题集xlsx表
+    7. 点击开始做题
 
 ## 三、注意事项
 1. 如要使用，请下载类似于1.0、2.0等版本号的分支上的代码，master是我改代码的主分支，往往是下一版本的半成品
