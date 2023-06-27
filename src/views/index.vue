@@ -4,9 +4,9 @@
             <div class="fileContainer">
                 <div class="uploadContainer">
                     <label class="uploadButton" for="upload">文件上传</label>
-                    <input type="file" id="upload" @change="uploadFile($event)" style="display: none;">
+                    <input type="file" id="upload" ref="upload" @change="uploadFile($event)" style="display: none;">
                     <div class="fileNameSpan">
-                        {{ fileName == '' || fileName == null || fileName == undefined ? '未上传文件' : fileName }}
+                        {{ fileFlag == false ? '未上传文件' : fileName }}
                     </div>
                     <div class="uploadButton" @click="downloadFile()">错题下载</div>
                 </div>
@@ -76,6 +76,7 @@ export default {
         return {
             file: null,
             fileName: '',
+            fileFlag: false,
             questions: [],
             wrongQuestions: [],
 
@@ -99,32 +100,38 @@ export default {
         uploadFile(event) {
             this.file = event.target.files[0]
             this.fileName = this.file.name
-            const reader = new FileReader()
+            this.$refs.upload.value = null
+            var reader = new FileReader()
             reader.readAsBinaryString(this.file)
             reader.onload = re => {
-                const data = re.target.result
-                const zzexcel = XLSX.read(data, {
-                    type: 'binary'
-                })
-                var table = zzexcel.Sheets[Object.keys(zzexcel.Sheets)[0]]
-                var index = table['!ref'].indexOf(':')
-                var row = table['!ref'].substring(index + 2)
-                this.questions = []
-                this.wrongQuestions = []
-                for (var i = 2; i <= row; i++) {
-                    var obj = {}
-                    obj.id = i - 2
-                    obj.type = table['A' + i].v
-                    obj.stem = table['B' + i].v
-                    obj.correct = table['C' + i].v
-                    obj.optionNum = table['D' + i].v
-                    obj.options = []
-                    for (var j = 1; j <= obj.optionNum; j++) {
-                        obj.options.push(table[String.fromCharCode('D'.charCodeAt(0) + j) + i].v)
+                try {
+                    var data = re.target.result
+                    var zzexcel = XLSX.read(data, {
+                        type: 'binary'
+                    })
+                    var table = zzexcel.Sheets[Object.keys(zzexcel.Sheets)[0]]
+                    var index = table['!ref'].indexOf(':')
+                    var row = table['!ref'].substring(index + 2)
+                    this.questions = []
+                    this.wrongQuestions = []
+                    for (var i = 2; i <= row; i++) {
+                        var obj = {}
+                        obj.id = i - 2
+                        obj.type = table['A' + i].v
+                        obj.stem = table['B' + i].v
+                        obj.correct = table['C' + i].v
+                        obj.optionNum = table['D' + i].v
+                        obj.options = []
+                        for (var j = 1; j <= obj.optionNum; j++) {
+                            obj.options.push(table[String.fromCharCode('D'.charCodeAt(0) + j) + i].v)
+                        }
+                        this.questions.push(obj)
                     }
-                    this.questions.push(obj)
+                    this.$message.success('文件上传成功')
+                    this.fileFlag = true
+                } catch (error) {
+                    this.$message.error('文件格式存在问题')
                 }
-                this.$message.success('文件上传成功')
             }
         },
         control(flag) {
